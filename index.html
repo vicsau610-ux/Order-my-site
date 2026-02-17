@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebCraft - Pedidos</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <script src="assets/js/auth.js"></script>
+</head>
+<body>
+    <script>
+        // Verificar autenticación al cargar la página
+        requireAuth();
+    </script>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="logo">WebCraft</div>
+            <ul class="nav-menu">
+                <li><a href="#" onclick="showPage('catalogo', event); return false;">Catálogo</a></li>
+                <li><a href="#" onclick="showPage('carrito', event); return false;">Carrito <span id="cart-badge" class="cart-badge">0</span></a></li>
+                <li><a href="#" onclick="showPage('pedido-personalizado', event); return false;">Pedido Personalizado</a></li>
+                <li><a href="#" onclick="showPage('estado-compras', event); return false;">Estado de Compras</a></li>
+                <li><a href="#" onclick="showPage('comunicacion', event); return false;">Comunicación</a></li>
+                <li class="navbar-user">
+                    <span id="user-name" class="user-name">Usuario</span>
+                    <span id="user-role" class="user-role"></span>
+                </li>
+                <li><a href="#" onclick="logout(); return false;" class="logout-btn">Salir</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- PANEL ADMIN (solo visible si es admin) -->
+    <div id="admin-panel" class="admin-panel" style="display: none;">
+        <div class="admin-container">
+            <h2>🔧 Panel de Administrador</h2>
+            <div class="admin-tabs">
+                <button class="admin-tab-btn active" onclick="showAdminTab('agregar-producto')">➕ Agregar Producto</button>
+                <button class="admin-tab-btn" onclick="showAdminTab('ver-pedidos')">📋 Ver Pedidos</button>
+                <button class="admin-tab-btn" onclick="showAdminTab('mensajes-admin')">💬 Mensajes</button>
+            </div>
+            
+            <!-- Tab: Agregar Producto -->
+            <div id="agregar-producto" class="admin-tab-content active">
+                <h3>Agregar Nuevo Producto</h3>
+                <form id="admin-product-form" class="admin-form" onsubmit="addProductAdmin(event)">
+                    <div class="form-group">
+                        <label for="admin-product-name">Nombre del Producto:</label>
+                        <input type="text" id="admin-product-name" placeholder="Ej: Sitio Web Profesional" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-product-price">Precio ($):</label>
+                        <input type="number" id="admin-product-price" placeholder="500" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-product-desc">Descripción:</label>
+                        <textarea id="admin-product-desc" rows="3" placeholder="Descripción del producto" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-product-icon">Emoji/Icono:</label>
+                        <input type="text" id="admin-product-icon" placeholder="🌐" maxlength="2">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Agregar Producto</button>
+                </form>
+                <div id="admin-product-message" class="message" style="display: none; margin-top: 20px;"></div>
+            </div>
+            
+            <!-- Tab: Ver Pedidos -->
+            <div id="ver-pedidos" class="admin-tab-content">
+                <h3>Gestionar Pedidos</h3>
+                <div class="admin-orders-filter">
+                    <button onclick="filterOrdersAdmin('todos')" class="filter-btn active">Todos</button>
+                    <button onclick="filterOrdersAdmin('pendiente')" class="filter-btn">Pendientes</button>
+                    <button onclick="filterOrdersAdmin('confirmado')" class="filter-btn">Confirmados</button>
+                    <button onclick="filterOrdersAdmin('completado')" class="filter-btn">Completados</button>
+                </div>
+                <div id="admin-orders-list" class="admin-orders-list">
+                    <!-- Los pedidos se cargarán aquí -->
+                </div>
+            </div>
+            
+            <!-- Tab: Mensajes Admin -->
+            <div id="mensajes-admin" class="admin-tab-content">
+                <h3>Mensajes de Usuarios</h3>
+                <div class="admin-messages-container">
+                    <div id="admin-users-list" class="admin-users-list">
+                        <!-- Lista de usuarios que han enviado mensajes -->
+                    </div>
+                    <div id="admin-chat-box" class="admin-chat-box">
+                        <div id="admin-chat-messages" class="admin-chat-messages">
+                            <!-- Mensajes de la conversación -->
+                        </div>
+                        <form id="admin-reply-form" class="admin-reply-form" onsubmit="sendAdminReply(event)">
+                            <textarea id="admin-reply-input" placeholder="Escribe tu respuesta..." rows="2" required></textarea>
+                            <button type="submit" class="btn btn-primary">Enviar Respuesta</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main id="main-content">
+        <!-- Catálogo -->
+        <section id="catalogo" class="page active">
+            <div class="container">
+                <h1>Catálogo de Productos</h1>
+                <div id="catalog-grid" class="catalog-grid">
+                    <!-- Los productos se cargarán aquí dinámicamente -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Carrito de Compras -->
+        <section id="carrito" class="page">
+            <div class="container">
+                <h1>Carrito de Compras</h1>
+                <div id="cart-content" class="cart-content">
+                    <!-- Los items del carrito se cargarán aquí -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Pedido Personalizado -->
+        <section id="pedido-personalizado" class="page">
+            <div class="container">
+                <h1>Crear Pedido Personalizado</h1>
+                <form id="custom-order-form" class="form-container">
+                    <div class="form-group">
+                        <label for="product-type">Tipo de Producto:</label>
+                        <select id="product-type" required>
+                            <option value="">Selecciona un tipo</option>
+                            <option value="website">Sitio Web</option>
+                            <option value="app">Aplicación Móvil</option>
+                            <option value="design">Diseño Gráfico</option>
+                            <option value="other">Otro</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Descripción del Pedido:</label>
+                        <textarea id="description" rows="5" placeholder="Cuéntanos los detalles de tu pedido..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="budget">Presupuesto Aproximado:</label>
+                        <input type="number" id="budget" placeholder="En dólares" min="0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="deadline">Fecha de Entrega Deseada:</label>
+                        <input type="date" id="deadline" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contact-name">Nombre de Contacto:</label>
+                        <input type="text" id="contact-name" placeholder="Tu nombre" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contact-email">Email de Contacto:</label>
+                        <input type="email" id="contact-email" placeholder="tu@email.com" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Enviar Pedido</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Estado de Compras -->
+        <section id="estado-compras" class="page">
+            <div class="container">
+                <h1>Estado de Tus Compras</h1>
+                <div class="search-box">
+                    <input type="text" id="order-search" placeholder="Busca por número de orden...">
+                    <button onclick="searchOrder()" class="btn btn-secondary">Buscar</button>
+                </div>
+                <div id="orders-list" class="orders-list">
+                    <!-- Las órdenes se cargarán aquí -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Comunicación con Vendedor -->
+        <section id="comunicacion" class="page">
+            <div class="container">
+                <h1>Comunicación con el Vendedor</h1>
+                <div class="communication-container">
+                    <div id="messages-container" class="messages-container">
+                        <!-- Los mensajes se cargarán aquí -->
+                    </div>
+                    <form id="message-form" class="message-form" onsubmit="sendMessage(event)">
+                        <textarea id="message-input" placeholder="Escribe tu mensaje..." rows="3" required></textarea>
+                        <button type="submit" class="btn btn-primary">Enviar Mensaje</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 WebCraft. Todos los derechos reservados.</p>
+    </footer>
+
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

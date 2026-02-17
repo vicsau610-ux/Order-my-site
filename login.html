@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebCraft - Iniciar Sesión / Registro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            color: #666;
+            transition: all 0.3s ease;
+            border: none;
+            background: white;
+        }
+        
+        .tab:hover {
+            background: #f5f5f5;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            margin-bottom: -2px;
+        }
+        
+        .content {
+            padding: 30px;
+            min-height: 350px;
+            display: none;
+        }
+        
+        .content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-group.password {
+            position: relative;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 40px;
+            cursor: pointer;
+            color: #666;
+            font-size: 1.2rem;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .message {
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .message.error {
+            background: #ffebee;
+            color: #c62828;
+            display: block;
+        }
+        
+        .message.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            display: block;
+        }
+        
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            color: #999;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 12px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            color: #1565c0;
+            margin-bottom: 20px;
+        }
+        
+        .role-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        
+        .role-badge.admin {
+            background: #f39c12;
+        }
+        
+        /* Estilos para 2FA */
+        #two-fa-screen {
+            padding: 30px;
+            min-height: 350px;
+            display: none;
+        }
+        
+        #two-fa-code {
+            font-family: 'Courier New', monospace;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        #two-fa-code::placeholder {
+            color: #ddd;
+        }
+        
+        #two-fa-message {
+            font-weight: bold;
+            border-radius: 5px;
+            padding: 12px;
+        }
+        
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                max-width: 100%;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🚀 WebCraft</h1>
+            <p>Sistema de Gestión de Pedidos</p>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('login')">Iniciar Sesión</button>
+            <button class="tab" onclick="switchTab('registro')">Crear Cuenta</button>
+        </div>
+        
+        <!-- Login Tab -->
+        <div id="login" class="content active">
+            <div id="login-message" class="message"></div>
+            
+            <form id="login-form" onsubmit="handleLogin(event)" autocomplete="off">
+                <div class="form-group">
+                    <label for="login-user">Usuario / Email</label>
+                    <input 
+                        type="text" 
+                        id="login-user" 
+                        name="username"
+                        placeholder="Ingresa tu usuario o email" 
+                        autocomplete="off"
+                        spellcheck="false"
+                        required
+                    >
+                </div>
+                
+                <div class="form-group password">
+                    <label for="login-password">Contraseña</label>
+                    <input 
+                        type="password" 
+                        id="login-password" 
+                        name="password"
+                        placeholder="Ingresa tu contraseña" 
+                        autocomplete="new-password"
+                        required
+                    >
+                    <span class="toggle-password" onclick="togglePassword('login-password')">👁️</span>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+            </form>
+        </div>
+        
+        <!-- Registro Tab -->
+        <div id="registro" class="content">
+            <div id="registro-message" class="message"></div>
+            
+            <div class="info-box">
+                ℹ️ Crea una nueva cuenta de usuario normal para acceder al catálogo
+            </div>
+            
+            <form id="registro-form" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label for="registro-name">Nombre Completo</label>
+                    <input 
+                        type="text" 
+                        id="registro-name" 
+                        placeholder="Tu nombre" 
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="registro-email">Email</label>
+                    <input 
+                        type="email" 
+                        id="registro-email" 
+                        placeholder="tu@email.com" 
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="registro-user">Usuario</label>
+                    <input 
+                        type="text" 
+                        id="registro-user" 
+                        placeholder="Elige un usuario único" 
+                        required
+                    >
+                </div>
+                
+                <div class="form-group password">
+                    <label for="registro-password">Contraseña</label>
+                    <input 
+                        type="password" 
+                        id="registro-password" 
+                        placeholder="Mínimo 6 caracteres" 
+                        required
+                    >
+                    <span class="toggle-password" onclick="togglePassword('registro-password')">👁️</span>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Crear Cuenta</button>
+            </form>
+        </div>
+    </div>
+    
+    <script src="assets/js/auth.js"></script>
+</body>
+</html>
