@@ -1,4 +1,4 @@
-# WebCraft - Sistema de Gestión de Pedidos
+# Order my site - Sistema de Gestión de Pedidos
 
 Plataforma web segura para gestión de pedidos con autenticación, panel administrativo y base de datos MySQL.
 
@@ -36,7 +36,7 @@ Plataforma web segura para gestión de pedidos con autenticación, panel adminis
 
 1. **Colocar en XAMPP:**
    ```
-   C:\xampp\htdocs\WebCraft\
+   C:\xampp\htdocs\Order my site\
    ```
 
 2. **Crear Base de Datos:**
