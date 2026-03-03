@@ -1,3 +1,35 @@
+// Manejar verificación de código
+function handleVerificacion(event) {
+    event.preventDefault();
+    const email = document.getElementById('verificacion-email').value;
+    const codigo = document.getElementById('verificacion-codigo').value.trim();
+    if (!codigo || codigo.length !== 6) {
+        showMessage('verificacion', '⚠️ Ingresa un código válido de 6 dígitos', true);
+        return;
+    }
+    fetch('api/usuarios.php?action=verificar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, codigo: codigo })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) {
+            showMessage('verificacion', `❌ ${data.error}`, true);
+        } else {
+            showMessage('verificacion', '✓ Usuario verificado correctamente. Ahora puedes iniciar sesión.');
+            setTimeout(() => {
+                document.getElementById('verificacion').style.display = 'none';
+                document.getElementById('login').classList.add('active');
+                document.getElementById('login-user').value = email;
+                switchTab('login');
+            }, 1500);
+        }
+    })
+    .catch(() => {
+        showMessage('verificacion', '❌ Error al verificar el código', true);
+    });
+}
 // Sistema de Autenticación para WebCraft
 
 // Estructura de usuario en localStorage
@@ -16,7 +48,7 @@ const ADMIN_USER = {
     id: 0,
     nombre: 'Administrador',
     email: 'admin@webcraft.com',
-    usuario: 'Anonymous',
+    usuario: 'blake',
     password: 'Blueroom@123',
     rol: 'admin',
     fecha_creacion: new Date().toISOString(),
@@ -26,9 +58,6 @@ const ADMIN_USER = {
 // Inicializar base de datos de usuarios
 function initUsers() {
     let users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
-    
-    // 🔒 SEGURIDAD: Limpiar admin antiguo Blake si existe
-    users = users.filter(u => u.usuario !== 'Blake');
     
     // 🔒 SEGURIDAD: Siempre garantizar que Anonymous (admin) esté presente
     const adminExists = users.some(u => u.usuario === 'Anonymous');
@@ -143,7 +172,7 @@ function logSecurityEvent(event, details = {}) {
 
 // 8. VERIFICACIÓN DE INTEGRIDAD DE USUARIO
 function verifyUserIntegrity(user) {
-    if (!user || !user.usuario || !user.password || !user.rol) {
+    if (!user || !user.usuario || !user.rol) {
         logSecurityEvent('Intento de acceso con datos de usuario inválidos');
         return false;
     }
@@ -155,27 +184,40 @@ function getDeviceFingerprint() {
     return navigator.userAgent.substring(0, 50);
 }
 
-// Cambiar entre tabs
+// Cambiar entre tabs (login / registro)
 function switchTab(tabName, event) {
     if (event) event.preventDefault();
-    
-    // Ocultar todos los tabs
+
+    // Ocultar todos los contenidos
     const contents = document.querySelectorAll('.content');
     contents.forEach(content => content.classList.remove('active'));
-    
+
     // Limpiar mensajes
     const messages = document.querySelectorAll('.message');
     messages.forEach(msg => msg.classList.remove('error', 'success'));
-    
-    // Ocultar todos los tabs de contenido
-    document.getElementById('login').classList.remove('active');
-    document.getElementById('registro').classList.remove('active');
-    
-    // Mostrar tab seleccionado si se proporcionó evento
+
+    // Mostrar el contenido correspondiente
+    const target = document.getElementById(tabName);
+    if (target) {
+        target.classList.add('active');
+    }
+
+    // Actualizar el estado visual de las pestañas
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => tab.classList.remove('active'));
+
     if (event && event.target) {
-        const tabs = document.querySelectorAll('.tab');
-        tabs.forEach(tab => tab.classList.remove('active'));
+        // Si viene de un click, usar el botón pulsado
         event.target.classList.add('active');
+    } else {
+        // Si se llamó desde código (por nombre), activar la pestaña adecuada
+        tabs.forEach(tab => {
+            const isLoginTab = tab.textContent.includes('Iniciar');
+            const isRegistroTab = tab.textContent.includes('Crear');
+            if ((tabName === 'login' && isLoginTab) || (tabName === 'registro' && isRegistroTab)) {
+                tab.classList.add('active');
+            }
+        });
     }
 }
 
@@ -284,38 +326,34 @@ function handleLogin(event) {
     .then(response => response.json())
     .then(data => {
         if (data.error) {
-            console.log('❌ Login fallido en servidor:', data.error);
-            const attempts = recordFailedAttempt();
-            const remaining = getRemainingAttempts();
-            
-            logSecurityEvent('Intento de login fallido en servidor', { 
-                usuario: usuario,
-                intento: attempts,
-                error: data.error
-            });
-            
-            if (remaining > 0) {
-                showMessage('login', `❌ ${data.error} ${remaining} intentos restantes.`, true);
+            // Si el error es por falta de verificación
+            if (data.error.toLowerCase().includes('verific') || data.error.toLowerCase().includes('activo')) {
+                showMessage('login', '❌ Debes verificar tu correo antes de iniciar sesión.', true);
             } else {
-                showMessage('login', '🔒 Acceso bloqueado. Demasiados intentos fallidos. Intenta de nuevo en 5 minutos.', true);
+                const attempts = recordFailedAttempt();
+                const remaining = getRemainingAttempts();
+                logSecurityEvent('Intento de login fallido en servidor', { 
+                    usuario: usuario,
+                    intento: attempts,
+                    error: data.error
+                });
+                if (remaining > 0) {
+                    showMessage('login', `❌ ${data.error} ${remaining} intentos restantes.`, true);
+                } else {
+                    showMessage('login', '🔒 Acceso bloqueado. Demasiados intentos fallidos. Intenta de nuevo en 5 minutos.', true);
+                }
             }
         } else {
-            console.log('✅ Login exitoso en MySQL:', data.usuario);
             clearLoginAttempts();
-            
-            // Guardar usuario del servidor
             localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(data.usuario));
             logSecurityEvent('Login exitoso en servidor', { 
                 usuario: data.usuario.usuario, 
                 rol: data.usuario.rol,
                 fingerprint: getDeviceFingerprint()
             });
-            
             showMessage('login', '✅ Iniciando sesión...', false);
             resetSessionTimeout();
-            
             setTimeout(() => {
-                console.log('Redirigiendo a index.html');
                 window.location.href = 'index.html';
             }, 500);
         }
@@ -475,14 +513,19 @@ function handleRegister(event) {
         } else {
             console.log('✅ Usuario registrado en MySQL:', data.usuario);
             logSecurityEvent('Nuevo usuario registrado en servidor', { usuario: usuario, email: email });
-            showMessage('registro', `✓ ¡Cuenta creada! Usuario: ${usuario}`);
-            
-            // Limpiar formulario
+            // En entorno local, el usuario queda verificado automáticamente
+            showMessage('registro', `✓ ¡Cuenta creada correctamente! Ya puedes iniciar sesión.`, false);
+
+            // Limpiar formulario de registro
             document.getElementById('registro-form').reset();
-            
-            // Cambiar a login después de 1.5 segundos
+
+            // Pasar automáticamente a la pestaña de login y rellenar el usuario/email
             setTimeout(() => {
-                document.getElementById('login-user').value = usuario;
+                const loginUserInput = document.getElementById('login-user');
+                if (loginUserInput) {
+                    // Prefiere email para login, si no, usuario
+                    loginUserInput.value = email || usuario;
+                }
                 switchTab('login');
             }, 1500);
         }
@@ -827,6 +870,8 @@ function cancelTwoFA() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('auth.js DOMContentLoaded');
     initUsers();
+    // En entorno local, limpiar bloqueos de intentos fallidos al cargar la página
+    clearLoginAttempts();
     
     // Configurar formulario de login
     const loginForm = document.getElementById('login-form');

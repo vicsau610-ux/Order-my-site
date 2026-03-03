@@ -12,7 +12,9 @@ CREATE TABLE usuarios (
     rol ENUM('usuario', 'admin') DEFAULT 'usuario',
     telefono VARCHAR(20),
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    activo BOOLEAN DEFAULT TRUE
+    activo BOOLEAN DEFAULT TRUE,
+    verificado BOOLEAN DEFAULT FALSE,
+    codigo_verificacion VARCHAR(10)
 );
 
 -- Tabla de productos/catálogo

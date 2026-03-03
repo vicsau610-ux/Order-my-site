@@ -347,6 +347,25 @@
                 <button type="submit" class="btn btn-primary">Crear Cuenta</button>
             </form>
         </div>
+
+            <!-- Verificación de código -->
+            <div id="verificacion" class="content" style="display:none">
+                <div id="verificacion-message" class="message"></div>
+                <div class="info-box">
+                    📧 Ingresa el código de verificación enviado a tu correo electrónico.
+                </div>
+                <form id="verificacion-form" onsubmit="handleVerificacion(event)">
+                    <div class="form-group">
+                        <label for="verificacion-email">Email</label>
+                        <input type="email" id="verificacion-email" required readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="verificacion-codigo">Código de verificación</label>
+                        <input type="text" id="verificacion-codigo" maxlength="6" required placeholder="Ej: 123456">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Verificar</button>
+                </form>
+            </div>
     </div>
     
     <script src="assets/js/auth.js"></script>
